@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,12 +10,27 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useActionState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ILoginFormProps {
-  loginAction: (formData: FormData) => void;
+  loginAction: (formData: FormData) => Promise<void | { error: string }>;
 }
 
+type ActionState = { error: string } | null | void;
+
 export function LoginForm({ loginAction }: ILoginFormProps) {
+  const [, dispatchAction, isPedding] = useActionState(
+    async (_previousData: any, formData: FormData) => {
+      const response = await loginAction(formData);
+
+      if (response?.error) {
+        toast.error(response.error);
+      }
+    },
+    null
+  );
   return (
     <Card>
       <CardHeader>
@@ -24,7 +40,7 @@ export function LoginForm({ loginAction }: ILoginFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={loginAction}>
+        <form action={dispatchAction}>
           <div className="flex flex-col gap-6">
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
@@ -49,10 +65,16 @@ export function LoginForm({ loginAction }: ILoginFormProps) {
               <Input id="password" type="password" required name="password" />
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isPedding}>
+                {isPedding && <Loader2 className="animate-spin" />}
                 Login
               </Button>
-              <Button variant="outline" type="button" className="w-full">
+              <Button
+                variant="outline"
+                type="button"
+                className="w-full"
+                disabled={isPedding}
+              >
                 Login with Google
               </Button>
             </div>
