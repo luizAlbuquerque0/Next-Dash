@@ -3,17 +3,15 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import { db } from "./db";
 import bcrypt, { compare } from "bcryptjs";
+import { loginSchema } from "@/schemas/loginSchema";
 
-const schema = z.object({
-  email: z.string().min(1).email(),
-  password: z.string().min(8),
-})
 
-NextAuth({
+
+export const {signIn} = NextAuth({
   providers: [
     Credentials({
       authorize: async(credentials) => {
-        const {data, success} = schema.safeParse(credentials)
+        const {data, success} = loginSchema.safeParse(credentials)
 
         if(!success) return null;
 
@@ -38,3 +36,4 @@ NextAuth({
   ],
 
 })
+
