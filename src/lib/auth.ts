@@ -4,11 +4,12 @@ import { z } from "zod";
 import { db } from "./db";
 import bcrypt, { compare } from "bcryptjs";
 import { loginSchema } from "@/schemas/loginSchema";
-
+import Google from "next-auth/providers/google";
 
 
 export const {signIn , auth , signOut , handlers} = NextAuth({
   providers: [
+    Google,
     Credentials({
       authorize: async(credentials) => {
         const {data, success} = loginSchema.safeParse(credentials)

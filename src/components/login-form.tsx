@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react";
 
 interface ILoginFormProps {
   loginAction: (formData: FormData) => Promise<void | { error: string }>;
@@ -74,6 +75,7 @@ export function LoginForm({ loginAction }: ILoginFormProps) {
                 type="button"
                 className="w-full"
                 disabled={isPedding}
+                onClick={() => signIn("google")}
               >
                 Login with Google
               </Button>
