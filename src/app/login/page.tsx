@@ -18,7 +18,7 @@ export default function Page() {
       await signIn("credentials", {
         email,
         password,
-        redirectTo: "/",
+        redirectTo: "/dash",
       });
     } catch (error) {
       if (error instanceof CredentialsSignin) {
