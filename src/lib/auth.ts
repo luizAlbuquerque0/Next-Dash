@@ -7,7 +7,7 @@ import { loginSchema } from "@/schemas/loginSchema";
 
 
 
-export const {signIn , auth} = NextAuth({
+export const {signIn , auth , signOut} = NextAuth({
   providers: [
     Credentials({
       authorize: async(credentials) => {
