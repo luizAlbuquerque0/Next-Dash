@@ -5,9 +5,11 @@ import { db } from "./db";
 import bcrypt, { compare } from "bcryptjs";
 import { loginSchema } from "@/schemas/loginSchema";
 import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter"
 
 
 export const {signIn , auth , signOut , handlers} = NextAuth({
+  adapter : PrismaAdapter(db),
   providers: [
     Google,
     Credentials({
@@ -20,7 +22,7 @@ export const {signIn , auth , signOut , handlers} = NextAuth({
 
         const user = await db.user.findUnique({where: {email}})
 
-        if(!user) return null;
+        if(!user || !user.password) return null;
 
         const isPasswordValid = await compare(password, user.password)
 
