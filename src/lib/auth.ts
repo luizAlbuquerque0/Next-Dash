@@ -35,15 +35,28 @@ export const {signIn , auth , signOut , handlers} = NextAuth({
 
         if(!isPasswordValid) return null
 
-        return  {
-          id: user.id,
-          email: user.email,
-          name: user.email
-        }
+        return  user;
 
       }
     })
   ],
+  callbacks: {
+    jwt({token, user}){
+      if(user?.role){
+        token.role = user.role;
+      }
+      return token
+    },
+    session({session, token}){
+      if(token.sub){
+        session.user.id = token.sub
+      }
 
+      if(token.role){
+        session.user.role = token.role
+      }
+      return session
+    }
+  }
 })
 
