@@ -1,17 +1,24 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
-import { db } from "./db";
+import { db } from "@/lib/db";
 import bcrypt, { compare } from "bcryptjs";
 import { loginSchema } from "@/schemas/loginSchema";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter"
-
+import Resend from "next-auth/providers/resend";
 
 export const {signIn , auth , signOut , handlers} = NextAuth({
+  pages: {
+    'verifyRequest' : '/login?magic-link=true',
+  },
   adapter : PrismaAdapter(db),
   providers: [
-    Google,
+    Resend({
+      from: 'Acme <onboarding@resend.dev>'
+    }),
+    Google({
+      allowDangerousEmailAccountLinking: true
+    }),
     Credentials({
       authorize: async(credentials) => {
         const {data, success} = loginSchema.safeParse(credentials)
