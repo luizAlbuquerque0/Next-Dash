@@ -1,62 +1,59 @@
+
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { db } from "@/lib/db";
-import bcrypt, { compare } from "bcryptjs";
-import { loginSchema } from "@/schemas/loginSchema";
-import Google from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import Resend from "next-auth/providers/resend";
+import { Resend } from "resend";
 
-export const {signIn , auth , signOut , handlers} = NextAuth({
-  pages: {
-    'verifyRequest' : '/login?magic-link=true',
-  },
-  adapter : PrismaAdapter(db),
+import { authConfig } from "./auth.config";
+import { db } from "./db";
+
+const resend = new Resend(process.env.AUTH_RESEND_KEY);
+
+export const { auth, signIn, signOut, handlers } = NextAuth({
+  ...authConfig,
   providers: [
-    Resend({
-      from: 'Acme <onboarding@resend.dev>'
-    }),
-    Google({
-      allowDangerousEmailAccountLinking: true
-    }),
-    Credentials({
-      authorize: async(credentials) => {
-        const {data, success} = loginSchema.safeParse(credentials)
-
-        if(!success) return null;
-
-        const {email, password} = data;
-
-        const user = await db.user.findUnique({where: {email}})
-
-        if(!user || !user.password) return null;
-
-        const isPasswordValid = await compare(password, user.password)
-
-        if(!isPasswordValid) return null
-
-        return  user;
-
-      }
-    })
+    ...authConfig.providers,
+    {
+      id: 'magic-link',
+      type: 'email',
+      name: 'Magic Link',
+      maxAge: 24 * 60 * 60,
+      async sendVerificationRequest({ identifier, url }) {
+        await resend.emails.send({
+          from: 'JStack <suporte@resend.dev>',
+          to: [identifier],
+          subject: 'Acesse o JStack!',
+          html: `<a href="${url}">Clique aqui</a> para acessar a plataforma do JStack!`,
+        });
+      },
+    },
   ],
+  pages: {
+    error: '/login',
+    signIn: '/login',
+    verifyRequest: '/login?magic-link=true',
+  },
+  adapter: PrismaAdapter(db),
+  session: {
+    strategy: 'jwt',
+  },
   callbacks: {
-    jwt({token, user}){
-      if(user?.role){
+    async jwt({ token, user }) {
+      if (user?.role) {
         token.role = user.role;
       }
-      return token
+
+      return token;
     },
-    session({session, token}){
-      if(token.sub){
-        session.user.id = token.sub
+    session({ session, token }) {
+      if (token.sub) {
+        session.user.id = token.sub;
       }
 
-      if(token.role){
-        session.user.role = token.role
+      if (token.role) {
+        session.user.role = token.role;
       }
-      return session
-    }
-  }
-})
 
+      return session;
+    },
+  },
+});
